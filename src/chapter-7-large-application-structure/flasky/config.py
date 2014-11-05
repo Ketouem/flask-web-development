@@ -20,7 +20,7 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     MAIL_SERVER = 'smtp.googlemail.com'
-    MAIL_SERVER = 587
+    MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
