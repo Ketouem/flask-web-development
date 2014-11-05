@@ -1,9 +1,10 @@
 from datetime import datetime
-from flask import render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, current_app
 from . import main
 from .forms import NameForm
 from .. import db
 from ..models import User
+from ..email import send_email
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -19,8 +20,8 @@ def index():
             # the redirection
             session['known'] = False
             # Send an email to the admin when a new user registers
-            if main.config['FLASKY_ADMIN']:
-                send_email(main.config['FLASKY_ADMIN'], 'New user',
+            if current_app.config['FLASKY_ADMIN']:
+                send_email(current_app.config['FLASKY_ADMIN'], 'New user',
                            'mail/new_user', user=user)
         else:
             session['known'] = True
