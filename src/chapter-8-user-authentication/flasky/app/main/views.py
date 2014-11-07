@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import render_template, session, redirect, url_for, current_app
+from flask.ext.login import login_required
 from . import main
 from .forms import NameForm
 from .. import db
@@ -33,3 +34,15 @@ def index():
     return render_template('index.html', current_time=datetime.utcnow(),
                            form=form, name=session.get('name'),
                            known=session.get('known', False))
+
+
+"""
+    If this route is accessed by a user who is not authenticated , Flask-Login
+    will intercept the request and send the user to the login page instead.
+"""
+
+
+@main.route('/secret')
+@login_required
+def secret():
+    return "Super secret stuff !"

@@ -1,6 +1,15 @@
 from . import db
 # Werkzeug provides facilities for password hashing
 from werkzeug.security import generate_password_hash, check_password_hash
+# User model for logins
+from flask.ext.login import UserMixin
+from . import login_manager
+
+
+# Flask-Login requires a callback function that loads a user given its id
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 # SQLAlchemy model
@@ -17,12 +26,23 @@ class Role(db.Model):
         return "<Role %r>" % self.name
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
+    """
+    To be able to work with the User model, Flask-Login requires a few methods
+    to be implemented:
+        -   is_authenticated
+        -   is_active
+        -   is_anonymous
+        -   get_id
+    Flask-Login provides a base UserMixin that has default implementations that
+    are appropriate for most cases.
+    """
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)

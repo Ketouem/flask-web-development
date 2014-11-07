@@ -31,6 +31,14 @@
             <ul class="nav navbar-nav">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
             </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <!-- current_user is provided by Flask-Login and is automatically available -->
+                {% if current_user.is_authenticated() %}
+                <li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Sign In</a></li>
+                {% endif %}
+            </ul>
         </div>
     </div>
 </div>
