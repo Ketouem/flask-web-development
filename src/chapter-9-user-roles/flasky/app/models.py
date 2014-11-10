@@ -15,6 +15,15 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+class Permission:
+
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLES = 0x04
+    MODERATE_COMMENTS = 0x08
+    ADMINISTER = 0x80
+
+
 # SQLAlchemy model
 class Role(db.Model):
     # Define the name of the table
