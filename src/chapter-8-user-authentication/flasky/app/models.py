@@ -4,6 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # User model for logins
 from flask.ext.login import UserMixin
 from . import login_manager
+# Account confirmation, token generation
+from flask import current_app
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 
 # Flask-Login requires a callback function that loads a user given its id
@@ -43,9 +46,37 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    confirmed = db.Column(db.Boolean, default=False)
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def generate_confirmation_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        """
+            Generate a cryptographic signature for the data given as an
+            argument and then serializes the data plus the signature as a
+            convenient token string.
+        """
+        return s.dumps({'confirm': self.id})
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            """
+                To decode the token, the serializer object provides a loads()
+                method that takes the token as its only argument. When this
+                method is given an invalid token or a valid expired token, an
+                exception is thrown.
+            """
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        return True
 
     @property
     def password(self):
