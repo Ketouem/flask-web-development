@@ -1,4 +1,5 @@
 from flask import Blueprint
+from ..models import Permission
 
 """
     A blueprint is similar to an application in that it can define routes.
@@ -8,6 +9,19 @@ from flask import Blueprint
 """
 
 main = Blueprint('main', __name__)
+
+"""
+    Permission may also need to be checked from templates, so the Permission
+    class needs to be accessible by them. To avoid having to add a template
+    argument in every `render_template` a context processor can be used.
+    Context processor make variables globally available to all templates.
+"""
+
+
+@main.app_context_processor
+def inject_permissions():
+    return dict(Permission=Permission)
+
 
 # These modules are imported at the bottom to avoid circular dependencies
 # because views and errors need to import the main blueprint

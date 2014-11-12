@@ -2,7 +2,7 @@ from . import db
 # Werkzeug provides facilities for password hashing
 from werkzeug.security import generate_password_hash, check_password_hash
 # User model for logins
-from flask.ext.login import UserMixin
+from flask.ext.login import UserMixin, AnonymousUserMixin
 from . import login_manager
 # Account confirmation, token generation
 from flask import current_app
@@ -85,6 +85,15 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     confirmed = db.Column(db.Boolean, default=False)
 
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        # Role assignment
+        if self.role is None:
+            if self.email == current_app.config['FLASKY_ADMIN']:
+                self.role = Role.query.filter_by(permissions=0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
+
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
@@ -115,6 +124,20 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    # Role verification
+    def can(self, permissions):
+        """
+            Bitwise and between requested permissions and the ones of the
+            requested role.
+            The method returns True if all the requested bits are present in
+            the role.
+        """
+        return self.role is not None and \
+            (self.role.permissions & permissions) == permissions
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
@@ -125,3 +148,19 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return "<User %r>" % self.username
+
+
+class AnonymousUser(AnonymousUserMixin):
+
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+"""
+    Registration of AnonymousUser as the class of the object that is assigned
+    to current_user when the user is not logged in. This will enable the app
+    to freely call `current_user.can` and `current_user.is_administrator`
+"""
+login_manager.anonymous_user = AnonymousUser

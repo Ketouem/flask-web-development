@@ -4,8 +4,9 @@ from flask.ext.login import login_required
 from . import main
 from .forms import NameForm
 from .. import db
-from ..models import User
+from ..models import User, Permission
 from ..email import send_email
+from ..decorators import admin_required, permission_required
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -46,3 +47,17 @@ def index():
 @login_required
 def secret():
     return "Super secret stuff !"
+
+
+@main.route('/admin')
+@login_required
+@admin_required
+def for_admins_only():
+    return "For administrators !"
+
+
+@main.route('/moderator')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def for_moderators_only():
+    return "For comment moderators !"
