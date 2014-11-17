@@ -145,6 +145,13 @@ class User(UserMixin, db.Model):
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
 
+    def ping(self):
+        """
+            Refresh last visit time of a user
+        """
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
